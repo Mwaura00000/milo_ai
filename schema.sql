@@ -4,7 +4,12 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- Users table extending auth.users (assuming Supabase Auth)
 CREATE TABLE public.profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  full_name TEXT,
   academic_level TEXT CHECK (academic_level IN ('university', 'high_school')),
+  university TEXT,
+  course TEXT,
+  year TEXT,
+  semester TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -76,3 +81,26 @@ CREATE POLICY "Users can update their own profile"
 CREATE INDEX idx_study_sessions_user_id ON public.study_sessions(user_id);
 CREATE INDEX idx_study_sessions_topic_id ON public.study_sessions(topic_id);
 CREATE INDEX idx_document_chunks_embedding ON public.document_chunks USING hnsw (embedding vector_cosine_ops);
+
+-- Trigger to automatically create a profile for new users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, academic_level, university, course, year, semester)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'academic_level', 'university'),
+    COALESCE(NEW.raw_user_meta_data->>'university', ''),
+    COALESCE(NEW.raw_user_meta_data->>'course', ''),
+    COALESCE(NEW.raw_user_meta_data->>'year', ''),
+    COALESCE(NEW.raw_user_meta_data->>'semester', '')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+

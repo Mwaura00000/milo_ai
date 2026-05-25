@@ -30,24 +30,26 @@ export default function FocusPage() {
       const name = active.trim().toLowerCase();
       
       // Map mascots & colors
-      if (name.includes("math")) {
+      // Map mascots & colors (updated to match university modules)
+      if (name.includes("programming") || name.includes("computing") || name.includes("software")) {
         setMascot("/calculator_mascot.png");
-        setAccentColor("text-[#f85c5c]");
-      } else if (name.includes("geography") || name.includes("geo")) {
+        setAccentColor("text-blue-600 dark:text-blue-400");
+      } else if (name.includes("calculus") || name.includes("math")) {
+        setMascot("/calculator_mascot.png");
+        setAccentColor("text-red-500 dark:text-red-400");
+      } else if (name.includes("economics") || name.includes("econ")) {
         setMascot("/earth_mascot.png");
-        setAccentColor("text-[#14fac8]");
-      } else if (name.includes("physics") || name.includes("phys")) {
-        setMascot("/physics_mascot.png");
-        setAccentColor("text-[#f85c5c]");
-      } else if (name.includes("chemistry") || name.includes("chem")) {
-        setMascot("/chemistry_mascot.png");
-        setAccentColor("text-[#14fac8]");
+        setAccentColor("text-emerald-600 dark:text-emerald-400");
+      } else if (name.includes("communication") || name.includes("skills")) {
+        setMascot("/milo_mascot.png");
+        setAccentColor("text-purple-600 dark:text-purple-400");
       } else {
         // Fallback custom subject styling
         setMascot("/milo_mascot.png");
-        setAccentColor("text-purple-400");
+        setAccentColor("text-indigo-600 dark:text-indigo-400");
       }
     }
+
   }, []);
 
   // Timer states
@@ -152,42 +154,58 @@ export default function FocusPage() {
   const progressPercent = ((totalSeconds - timeLeft) / totalSeconds) * 100;
   const strokeDashoffset = 502 - (502 * progressPercent) / 100;
 
-  const isTealTheme = subject.includes("Geography") || subject.includes("Geo") || subject.includes("Chemistry") || subject.includes("Chem");
+  let strokeColor = "#8b5cf6"; // communications / fallback purple
+  const nameLower = subject.toLowerCase();
+  if (nameLower.includes("programming") || nameLower.includes("computing") || nameLower.includes("software")) strokeColor = "#2563eb"; // blue
+  else if (nameLower.includes("calculus") || nameLower.includes("math")) strokeColor = "#dc2626"; // red
+  else if (nameLower.includes("economics") || nameLower.includes("econ")) strokeColor = "#059669"; // emerald green
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#070a13] text-foreground transition-colors duration-300 overflow-y-auto no-scrollbar pb-32">
+    <div className="flex flex-col h-full dot-grid-bg-light dark:dot-grid-bg bg-slate-50 dark:bg-[#070a13] text-foreground transition-colors duration-300 overflow-y-auto no-scrollbar pb-32">
       
       {/* Title */}
-      <div className="px-6 pt-8 shrink-0 flex items-center justify-between">
+      <div className="px-6 pt-8 shrink-0 flex items-center justify-between z-10">
         <div>
           <h1 className="text-3xl font-black tracking-tight leading-none text-slate-800 dark:text-zinc-50">Focus Timer</h1>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 font-semibold">Active Subject: <span className={accentColor}>{subject}</span></p>
         </div>
-        <div className="flex items-center gap-1 text-[10px] font-black text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full animate-pulse-glow">
+        <div className="flex items-center gap-1 text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 border border-amber-250 dark:border-amber-400/20 px-2.5 py-1 rounded-full animate-pulse-glow shadow-sm select-none">
           <Sparkles className="w-3 h-3" />
           POMODORO
         </div>
       </div>
 
       {/* Main Focus Console */}
-      <div className="flex-1 px-6 flex flex-col items-center justify-center space-y-10 my-4">
+      <div className="flex-1 px-6 flex flex-col items-center justify-center space-y-10 my-4 z-10">
         
         {/* Glowing Circle Timer Container */}
         <div className="relative w-64 h-64 flex items-center justify-center animate-scale-in">
           
-          <div className="absolute inset-0 rounded-full border-4 border-zinc-200 dark:border-zinc-800/80 shadow-md" />
+          {/* Dotted inner shadow and track circle */}
+          <div className="absolute inset-0 rounded-full border-4 border-zinc-200/50 dark:border-zinc-800/80 shadow-inner bg-white/40 dark:bg-zinc-950/20" />
           
           <svg className="w-64 h-64 -rotate-90 absolute z-10" viewBox="0 0 172 172">
+            {/* Background static circle track */}
+            <circle
+              cx="86"
+              cy="86"
+              r="76"
+              stroke="#e4e4e7"
+              strokeWidth="9"
+              className="dark:stroke-zinc-800"
+              fill="transparent"
+            />
+            {/* Dynamic foreground progress circle */}
             <circle
               className="transition-all duration-300"
               cx="86"
               cy="86"
-              r="80"
-              stroke={isTealTheme ? "#14fac8" : subject === "Mathematics" || subject === "Physics" ? "#f85c5c" : "#a855f7"}
-              strokeWidth="5"
+              r="76"
+              stroke={strokeColor}
+              strokeWidth="9"
               fill="transparent"
-              strokeDasharray="502"
-              strokeDashoffset={strokeDashoffset}
+              strokeDasharray="478"
+              strokeDashoffset={478 - (478 * progressPercent) / 100}
               strokeLinecap="round"
             />
           </svg>
@@ -195,60 +213,60 @@ export default function FocusPage() {
           {/* Central mascot & countdown */}
           <div className="absolute z-20 flex flex-col items-center text-center">
             
-            {/* Mascot circular sticker container */}
-            <div className="w-20 h-20 rounded-full bg-white p-3 shadow-md border border-zinc-200 flex items-center justify-center relative overflow-hidden mb-2 group">
+            {/* Mascot circular sticker container with Duolingo-style thick bottom shadow */}
+            <div className="w-24 h-24 rounded-full bg-white dark:bg-zinc-900 p-3.5 shadow-md border-2 border-zinc-200 border-b-6 border-b-zinc-200/60 dark:border-zinc-800 dark:border-b-zinc-950 flex items-center justify-center relative overflow-hidden mb-2 group hover:rotate-6 active:-rotate-6 transition-all duration-350 select-none">
               <Image 
                 src={mascot} 
                 alt="Subject Mascot" 
-                width={56} 
-                height={56} 
+                width={64} 
+                height={64} 
                 className="object-contain animate-float"
               />
             </div>
 
-            <span className="text-4xl font-black tracking-tight tabular-nums font-mono leading-none dark:text-white">
+            <span className="text-4xl font-black tracking-tight tabular-nums font-mono leading-none text-zinc-800 dark:text-white mt-1">
               {formatTime(timeLeft)}
             </span>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest mt-1.5">{subject}</p>
+            <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-extrabold uppercase tracking-widest mt-1.5">{subject}</p>
           </div>
         </div>
 
-        {/* Duration Adjust */}
+        {/* Duration Adjust with 3D tactile buttons */}
         {!isRunning && (
-          <div className="w-full max-w-xs bg-zinc-900 border border-zinc-800 rounded-3xl p-3 flex items-center justify-between shadow-md text-white animate-scale-in">
+          <div className="w-full max-w-xs bg-zinc-900 border-2 border-zinc-800 border-b-6 border-b-zinc-950 rounded-[28px] p-3.5 flex items-center justify-between shadow-md text-white animate-scale-in select-none">
             <button 
               onClick={() => setDurationMinutes(prev => Math.max(5, prev - 5))}
-              className="w-10 h-10 rounded-2xl bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors active:scale-95"
+              className="w-11 h-11 rounded-2xl bg-zinc-800 hover:bg-zinc-700 border-2 border-zinc-700 border-b-4 border-b-zinc-900 active:border-b-0 active:translate-y-[4px] flex items-center justify-center transition-all cursor-pointer"
             >
-              <Minus className="w-4 h-4 text-zinc-300" />
+              <Minus className="w-4 h-4 text-zinc-300 stroke-[3]" />
             </button>
             <div className="text-center">
-              <span className="text-[10px] text-zinc-500 font-black block uppercase tracking-wider">Set Interval</span>
+              <span className="text-[9px] text-zinc-500 font-black block uppercase tracking-wider">Set Interval</span>
               <span className="text-lg font-black text-[#14fac8]">{durationMinutes} min</span>
             </div>
             <button 
               onClick={() => setDurationMinutes(prev => Math.min(60, prev + 5))}
-              className="w-10 h-10 rounded-2xl bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors active:scale-95"
+              className="w-11 h-11 rounded-2xl bg-zinc-800 hover:bg-zinc-700 border-2 border-zinc-700 border-b-4 border-b-zinc-900 active:border-b-0 active:translate-y-[4px] flex items-center justify-center transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4 text-zinc-300" />
+              <Plus className="w-4 h-4 text-zinc-300 stroke-[3]" />
             </button>
           </div>
         )}
 
-        {/* Controls */}
+        {/* Controls with tactile push buttons */}
         <div className="w-full max-w-xs space-y-4">
           <div className="flex gap-3 justify-center">
             <button
               onClick={handleStartPause}
-              className={`flex-1 h-14 rounded-2xl font-black text-sm tracking-wide shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 ${
+              className={`flex-1 h-14 rounded-2xl font-black text-sm tracking-wide shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer select-none ${
                 isRunning 
-                  ? "bg-zinc-900 border border-zinc-800 text-amber-400 hover:border-amber-400/30" 
-                  : "bg-[#14fac8] hover:bg-[#12dda2] text-[#070a13]"
+                  ? "bg-zinc-900 border-2 border-zinc-800 border-b-6 border-b-zinc-950 active:border-b-2 active:translate-y-[4px] text-amber-400 hover:border-amber-500/20" 
+                  : "bg-[#14fac8] hover:bg-[#1efdd0] border-2 border-[#14fac8] border-b-6 border-b-[#0ca986] text-[#070a13] active:border-b-2 active:translate-y-[4px]"
               }`}
             >
               {isRunning ? (
                 <>
-                  <Pause className="w-4 h-4 stroke-[3]" /> Paused
+                  <Pause className="w-4 h-4 stroke-[3]" /> Pause
                 </>
               ) : (
                 <>
@@ -259,29 +277,29 @@ export default function FocusPage() {
 
             <button
               onClick={handleReset}
-              className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 flex items-center justify-center transition-all active:scale-95"
+              className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 border-b-6 border-b-zinc-300 dark:border-b-zinc-950 text-zinc-700 dark:text-zinc-400 active:border-b-2 active:translate-y-[4px] flex items-center justify-center transition-all cursor-pointer select-none"
               title="Reset Timer"
             >
-              <RotateCcw className="w-5 h-5" />
+              <RotateCcw className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
 
-          {/* Interruption Logger */}
+          {/* Interruption Logger with Playful tactile layout */}
           {isRunning && (
             <button
               onClick={() => setInterruptions(prev => prev + 1)}
-              className="w-full h-12 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-400/30 dark:text-zinc-500 transition-colors flex items-center justify-center gap-2 text-xs font-bold"
+              className="w-full h-12 rounded-2xl bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 border-b-4 border-b-zinc-200 dark:border-b-zinc-900 hover:border-red-400/20 hover:text-red-500 hover:border-solid text-zinc-400 dark:text-zinc-500 active:border-b-2 active:translate-y-[2px] transition-all flex items-center justify-center gap-2 text-xs font-black cursor-pointer select-none"
             >
-              <AlertCircle className="w-4 h-4" />
+              <AlertCircle className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
               Log Interruption ({interruptions})
             </button>
           )}
 
-          {/* Manual Completion Trigger */}
+          {/* Manual Completion Trigger with 3D tactile push */}
           {!isRunning && timeLeft < totalSeconds && (
             <button
               onClick={handleSessionComplete}
-              className="w-full h-11 rounded-2xl bg-[#f85c5c] text-white hover:bg-[#eb4848] transition-colors flex items-center justify-center gap-2 text-xs font-black shadow-md"
+              className="w-full h-12 rounded-2xl bg-red-500 hover:bg-red-400 border-2 border-red-500 border-b-6 border-b-red-700 active:border-b-2 active:translate-y-[4px] text-white transition-all flex items-center justify-center gap-2 text-xs font-black shadow-md cursor-pointer select-none"
             >
               <Square className="w-3.5 h-3.5 fill-current" />
               End & Save Session
@@ -289,6 +307,7 @@ export default function FocusPage() {
           )}
         </div>
       </div>
+
 
       {/* Session Logger Modal */}
       {showLogModal && (

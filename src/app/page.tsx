@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Moon, Sun, Award, Sparkles, CheckCircle2, GraduationCap, MapPin, Percent, Globe, BookOpen } from "lucide-react";
 import { useTheme } from "next-themes";
+import { isSupabaseConfigured } from "@/lib/supabase";
+
 
 export default function TodayPage() {
   const { theme, setTheme } = useTheme();
@@ -162,17 +164,18 @@ export default function TodayPage() {
       
       {/* Top Header Navigation */}
       <div className="bg-white dark:bg-[#121214] border-b border-zinc-150 dark:border-zinc-800/80 px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform" onClick={() => router.push("/welcome")}>
-          <div className="w-9 h-9 rounded-xl bg-white p-1.5 shadow-sm flex items-center justify-center border border-zinc-200 dark:border-zinc-700 animate-float">
-            <Image src="/milo_mascot.png" alt="Milo Owl Logo" width={28} height={28} className="object-contain" />
-          </div>
-          <span className="text-xl font-extrabold text-zinc-800 dark:text-white flex items-center gap-1.5">
-            Milo
-            <span className="text-[10px] bg-blue-50 dark:bg-[#14fac8]/10 text-blue-600 dark:text-[#14fac8] border border-blue-100 dark:border-[#14fac8]/20 rounded-full px-2 py-0.5 font-black uppercase tracking-wider scale-90">
+        <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => router.push("/welcome")}>
+          <span className="text-2xl font-black text-zinc-800 dark:text-white flex items-center gap-1 font-heading tracking-tight">
+            <span className="bg-blue-600 border-b-4 border-blue-800 text-white rounded-xl px-2 py-0.5 animate-float flex items-center justify-center min-w-7">M</span>
+            <span className="bg-indigo-600 border-b-4 border-indigo-800 text-white rounded-xl px-2 py-0.5 animate-float-delayed flex items-center justify-center min-w-4">i</span>
+            <span className="bg-violet-600 border-b-4 border-violet-800 text-white rounded-xl px-2 py-0.5 animate-float flex items-center justify-center min-w-4">l</span>
+            <span className="bg-emerald-600 border-b-4 border-emerald-800 text-white rounded-xl px-2 py-0.5 animate-float-delayed flex items-center justify-center min-w-7">o</span>
+            <span className="text-[10px] bg-slate-50 dark:bg-zinc-800 border-2 border-b-4 border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-300 rounded-xl px-2 py-0.5 font-black uppercase tracking-wider ml-1.5 rotate-6 inline-block">
               Uni
             </span>
           </span>
         </div>
+
 
         {/* Top Right Header Buttons */}
         <div className="flex items-center gap-2">
@@ -284,26 +287,28 @@ export default function TodayPage() {
                   {/* Timeline node dot */}
                   <div className={`absolute top-5 -left-[30px] w-3 h-3 rounded-full ${item.dotColor} border-2 border-white dark:border-[#070a13] shadow-md z-10`} />
 
-                  {/* High-contrast solid white rounded card chassis */}
+                  {/* High-contrast solid white rounded card chassis with Duolingo-style 3D tactile depth */}
                   <div
                     onClick={() => handleCardClick(item.subject)}
-                    className={`bg-white dark:bg-[#18181b] border border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl p-5 shadow-[0_4px_16px_rgba(0,0,0,0.02)] dark:shadow-[0_12px_24px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_15px_30px_rgba(0,0,0,0.3)] transition-all duration-300 cursor-pointer active:scale-[0.98] flex flex-col gap-3 relative overflow-hidden ${item.leftBorder}`}
+                    className={`bg-white dark:bg-[#18181b] border-2 border-zinc-200/80 dark:border-zinc-800/80 border-b-6 border-b-zinc-200/50 dark:border-b-zinc-900 rounded-[28px] p-5 cursor-pointer hover:-translate-y-0.5 hover:border-b-8 hover:shadow-md active:translate-y-1 active:border-b-2 transition-all duration-150 flex flex-col gap-3 relative overflow-hidden group select-none ${item.leftBorder}`}
                   >
                     
                     <div className="flex items-center gap-3">
                       {/* Left circular solid colored badge icon */}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${item.badgeBg} shadow-sm shrink-0`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${item.badgeBg} shadow-sm shrink-0 border-2 border-b-4 border-black/10`}>
                         <IconComp className="w-4 h-4 stroke-[3.5]" />
                       </div>
                       
-                      <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-white">
+                      <h3 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {item.subject}
                       </h3>
                     </div>
 
-                    <div className="flex items-center gap-3 pl-11">
-                      {/* Empty dynamic placeholder circles matching second screenshot */}
-                      <div className="w-6 h-6 rounded-full border-2 border-zinc-200 dark:border-zinc-700 shrink-0" />
+                    <div className="flex items-center gap-3 pl-11 pr-16">
+                      {/* Playful tactical checkpoint box instead of circular frame */}
+                      <div className="w-6 h-6 rounded-xl border-2 border-zinc-200 border-b-4 border-zinc-300 dark:border-zinc-700 dark:border-b-zinc-800 bg-slate-50 dark:bg-zinc-900 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-inner">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-650 group-hover:text-emerald-500 transition-colors" />
+                      </div>
                       
                       {/* Dynamic module descriptor line */}
                       <p className="text-xs text-zinc-400 dark:text-zinc-500 font-bold tracking-tight truncate flex-1">
@@ -311,18 +316,18 @@ export default function TodayPage() {
                       </p>
                     </div>
 
-                    {/* Miniature sticker mascot frame visible in dynamic layouts */}
-                    <div className="absolute right-4 top-4 w-9 h-9 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 p-1 flex items-center justify-center opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all">
+                    {/* Massive cartoon mascot sticker on the right */}
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-slate-50/70 dark:bg-zinc-800/70 border-2 border-b-4 border-zinc-200/80 dark:border-zinc-700/80 p-1.5 flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-transform">
                       <Image 
                         src={item.mascot} 
                         alt={item.subject} 
-                        width={28} 
-                        height={28} 
+                        width={44} 
+                        height={44} 
                         className="object-contain animate-float"
                       />
                     </div>
-
                   </div>
+
 
                 </div>
               );

@@ -42,20 +42,20 @@ export default function BuddyPage() {
     }
   }, []);
 
-  // Nairobi collegiate greetings matching active mascot
+  // Nairobi collegiate greetings matching active mascot (updated to match university modules)
   const getWelcomeGreeting = (sub: string) => {
     const name = sub.trim().toLowerCase();
-    if (name.includes("math")) {
-      return "Sasa! I am your Mathematics buddy. I saw you studied Algebra recently. Uko ready for a quick brain check, or should we review standard formulas? Let's smash this!";
+    if (name.includes("programming") || name.includes("computing") || name.includes("software")) {
+      return "Sasa! Introduction to Programming Coach activated. I saw you studied dynamic programming recently. Ready for a quick multiple-choice code quiz, or should we review standard syntax? Let's smash this!";
     }
-    if (name.includes("geography") || name.includes("geo")) {
-      return "Sasa! Geography Coach here. Global Ecosystems is actually very simple once we split it into biomes. Want a quick interactive quiz to lock in the knowledge?";
+    if (name.includes("calculus") || name.includes("math")) {
+      return "Sasa! Calculus I buddy in the building. Let's make sense of those tricky limits and derivatives. Ready to try a fast quiz, or should we break down integrals?";
     }
-    if (name.includes("physics") || name.includes("phys")) {
-      return "Sasa! Physics buddy in the building. Let's make sense of those tricky wave equations. Ready to try a fast quiz, or should we break down kinetic mechanics?";
+    if (name.includes("economics") || name.includes("econ")) {
+      return "Sasa! Economics 101 Coach here. Supply and demand curves are actually very simple once we split them into market equilibria. Want a quick interactive quiz to lock in the knowledge?";
     }
-    if (name.includes("chemistry") || name.includes("chem")) {
-      return "Sasa! Chemistry Coach activated. Organic reactions can look like a maze, but they have clear patterns. Shall we do a quick stoichiometry mock session?";
+    if (name.includes("communication") || name.includes("skills")) {
+      return "Sasa! Communication Skills Coach activated. Let's master citation systems and active listening filters. Shall we do a quick mock session?";
     }
     // Fallback dialogue for custom dynamic subjects
     return `Sasa! I am your active Milo coach for ${sub}. Let's break down this university unit together and master it step-by-step. Ready for a quick adaptive quiz, or do you have a tough lecture slide concept to discuss?`;
@@ -66,14 +66,14 @@ export default function BuddyPage() {
     const name = activeSubject.trim().toLowerCase();
     let chosenMascot = "/milo_mascot.png"; // Fallback mascot
 
-    if (name.includes("math")) {
+    if (name.includes("programming") || name.includes("computing") || name.includes("software")) {
       chosenMascot = "/calculator_mascot.png";
-    } else if (name.includes("geography") || name.includes("geo")) {
+    } else if (name.includes("calculus") || name.includes("math")) {
+      chosenMascot = "/calculator_mascot.png";
+    } else if (name.includes("economics") || name.includes("econ")) {
       chosenMascot = "/earth_mascot.png";
-    } else if (name.includes("physics") || name.includes("phys")) {
-      chosenMascot = "/physics_mascot.png";
-    } else if (name.includes("chemistry") || name.includes("chem")) {
-      chosenMascot = "/chemistry_mascot.png";
+    } else if (name.includes("communication") || name.includes("skills")) {
+      chosenMascot = "/milo_mascot.png";
     }
 
     setMascot(chosenMascot);
@@ -86,6 +86,7 @@ export default function BuddyPage() {
       }
     ]);
   }, [activeSubject]);
+
 
   // Scroll to bottom when messages list changes
   useEffect(() => {
@@ -181,19 +182,21 @@ export default function BuddyPage() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-[#070a13] text-foreground transition-colors duration-300 overflow-hidden pb-24 relative">
-      
-      {/* Subject Selector Bar */}
-      <div className="bg-[#121214] border-b border-zinc-800/80 px-4 py-3 shrink-0 flex items-center justify-between z-10">
-        <div className="flex items-center gap-2">
-          {/* Active Mascot Avatar Header */}
-          <div className="w-10 h-10 rounded-xl bg-white p-1.5 shadow-md flex items-center justify-center border border-zinc-700 animate-float">
-            <Image src={mascot} alt="Mascot" width={32} height={32} className="object-contain" />
+      {/* Subject Selector Bar with Gamified Tactile Header */}
+      <div className="bg-[#121214] border-b-2 border-zinc-800/80 px-4 py-4 shrink-0 flex items-center justify-between z-10 relative overflow-hidden">
+        {/* Decorative Grid texture */}
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+        
+        <div className="flex items-center gap-2 z-10">
+          {/* Active Mascot Avatar Header with Duolingo-style sticker frame */}
+          <div className="w-11 h-11 rounded-full bg-white p-1 shadow-md flex items-center justify-center border-2 border-b-4 border-zinc-300 dark:border-zinc-700 animate-float shrink-0">
+            <Image src={mascot} alt="Mascot" width={36} height={36} className="object-contain" />
           </div>
           <div>
-            <h1 className="text-sm font-black text-white leading-none flex items-center gap-1.5">
+            <h1 className="text-sm font-black text-white leading-none flex items-center gap-1.5 font-sans">
               Buddy Coach
             </h1>
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider mt-0.5 block">AI Study Assistant</span>
+            <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-widest mt-1 block">AI Study Assistant</span>
           </div>
         </div>
 
@@ -201,7 +204,7 @@ export default function BuddyPage() {
         <select 
           value={activeSubject}
           onChange={(e) => setActiveSubject(e.target.value)}
-          className="text-xs font-bold bg-zinc-900 border border-zinc-800 text-zinc-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#14fac8]"
+          className="text-xs font-black bg-zinc-900 border-2 border-zinc-800 border-b-4 border-b-zinc-950 text-zinc-300 rounded-2xl px-3 py-2 focus:outline-none focus:border-blue-500 cursor-pointer transition-all active:translate-y-[2px] active:border-b-2 select-none z-10"
         >
           {subjectsList.map((subName) => (
             <option key={subName} value={subName}>{subName} Coach</option>
@@ -210,8 +213,8 @@ export default function BuddyPage() {
       </div>
 
       {/* Chat Messages Log Area */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-4 overflow-y-auto no-scrollbar">
-        <div className="space-y-4 pb-12">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 py-4 overflow-y-auto no-scrollbar dot-grid-bg-light dark:dot-grid-bg bg-slate-50 dark:bg-[#070a13] z-0">
+        <div className="space-y-6 pb-12">
           {messages.map((m, mIndex) => {
             const isUser = m.role === "user";
             return (
@@ -219,24 +222,24 @@ export default function BuddyPage() {
                 
                 {/* Avatar Icon */}
                 {!isUser ? (
-                  <div className="w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm shrink-0 flex items-center justify-center p-1 relative overflow-hidden self-end">
-                    <Image src={mascot} alt="Mascot" width={24} height={24} className="object-contain" />
+                  <div className="w-9 h-9 rounded-full bg-white border-2 border-b-4 border-zinc-200 dark:border-zinc-800 shadow-md shrink-0 flex items-center justify-center p-1.5 relative overflow-hidden self-end select-none">
+                    <Image src={mascot} alt="Mascot" width={28} height={28} className="object-contain" />
                   </div>
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 shadow-md shrink-0 flex items-center justify-center text-[10px] font-black text-white self-end uppercase">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 border-2 border-b-4 border-blue-800 shadow-md shrink-0 flex items-center justify-center text-[10px] font-black text-white self-end uppercase select-none">
                     You
                   </div>
                 )}
 
                 {/* Message Bubble Frame */}
-                <div className="flex flex-col space-y-2 max-w-[82%]">
+                <div className="flex flex-col space-y-2 max-w-[80%]">
                   
-                  {/* Standard text content */}
+                  {/* Speech bubble custom styles */}
                   {m.content && (
-                    <div className={`rounded-2xl px-4 py-3 text-xs leading-relaxed font-medium shadow-sm border ${
+                    <div className={`px-4 py-3 text-xs leading-relaxed font-semibold shadow-md ${
                       isUser 
-                        ? "bg-indigo-600 text-white border-indigo-500 rounded-br-none" 
-                        : "bg-white dark:bg-[#121214] text-slate-800 dark:text-zinc-200 border-zinc-200/50 dark:border-zinc-800/80 rounded-bl-none"
+                        ? "rounded-[24px] bg-blue-600 border-2 border-blue-600 border-b-6 border-b-blue-800 text-white rounded-br-none font-black shadow-blue-500/10" 
+                        : "speech-bubble-left bg-white dark:bg-[#121214] text-slate-800 dark:text-zinc-200 rounded-bl-none"
                     }`}>
                       {m.content}
                     </div>
@@ -244,9 +247,9 @@ export default function BuddyPage() {
 
                   {/* Interactive Gamified Quiz Card */}
                   {m.quiz && (
-                    <div className="bg-white dark:bg-[#121214] border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 shadow-md max-w-sm w-full animate-scale-in">
-                      <div className="flex items-center gap-1.5 text-[9px] font-black tracking-widest text-[#14fac8] uppercase mb-2">
-                        <BrainCircuit className="w-3.5 h-3.5" />
+                    <div className="bg-white dark:bg-[#121214] border-2 border-zinc-200 dark:border-zinc-800 border-b-6 border-b-zinc-250 dark:border-b-zinc-900 rounded-[28px] p-5 shadow-lg max-w-sm w-full animate-scale-in select-none">
+                      <div className="flex items-center gap-1.5 text-[9px] font-black tracking-widest text-emerald-600 dark:text-[#14fac8] uppercase mb-2">
+                        <BrainCircuit className="w-3.5 h-3.5 animate-pulse" />
                         ADAPTIVE DRILL
                       </div>
 
@@ -256,21 +259,22 @@ export default function BuddyPage() {
 
                       {/* Options buttons */}
                       <div className="space-y-2">
+
                         {m.quiz.options.map((opt, oIndex) => {
                           const isAnswered = m.quiz?.userAnswer !== undefined;
                           const isSelected = m.quiz?.userAnswer === oIndex;
                           const isCorrect = m.quiz?.correctIndex === oIndex;
 
-                          let btnStyle = "bg-slate-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800";
+                          let btnStyle = "bg-slate-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 border-b-zinc-300 dark:border-b-zinc-950 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850";
                           if (isAnswered) {
                             if (isSelected) {
                               btnStyle = isCorrect 
-                                ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold"
-                                : "bg-red-500/20 border-red-500 text-red-400 font-bold";
+                                ? "bg-emerald-500/20 border-emerald-500 border-b-emerald-600 text-emerald-400 font-bold"
+                                : "bg-red-500/20 border-red-500 border-b-red-600 text-red-400 font-bold";
                             } else if (isCorrect) {
-                              btnStyle = "bg-emerald-500/10 border-emerald-500/40 text-emerald-400/80";
+                              btnStyle = "bg-emerald-500/10 border-emerald-500/40 border-b-emerald-600/40 text-emerald-400/80";
                             } else {
-                              btnStyle = "opacity-40 bg-slate-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-500";
+                              btnStyle = "opacity-45 bg-slate-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 border-b-zinc-300 text-zinc-500";
                             }
                           }
 
@@ -279,11 +283,11 @@ export default function BuddyPage() {
                               key={oIndex}
                               disabled={isAnswered}
                               onClick={() => handleAnswerQuiz(mIndex, oIndex)}
-                              className={`w-full text-left px-3 py-2 rounded-xl border text-[11px] transition-all flex items-center justify-between gap-2 active:scale-98 ${btnStyle}`}
+                              className={`w-full text-left px-3.5 py-2.5 rounded-2xl border-2 border-b-4 text-xs transition-all flex items-center justify-between gap-2 active:translate-y-[2px] active:border-b-2 active:scale-[0.99] cursor-pointer ${btnStyle}`}
                             >
                               <span>{opt}</span>
-                              {isAnswered && isCorrect && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
-                              {isAnswered && isSelected && !isCorrect && <X className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+                              {isAnswered && isCorrect && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />}
+                              {isAnswered && isSelected && !isCorrect && <X className="w-3.5 h-3.5 text-red-400 shrink-0 stroke-[3]" />}
                             </button>
                           );
                         })}
@@ -291,11 +295,11 @@ export default function BuddyPage() {
 
                       {/* Quiz Explanations Section */}
                       {m.quiz.userAnswer !== undefined && (
-                        <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 animate-slide-up flex gap-2">
-                          <AlertCircle className="w-4 h-4 text-[#14fac8] shrink-0 mt-0.5" />
+                        <div className="mt-3 pt-3 border-t-2 border-zinc-100 dark:border-zinc-800/80 animate-slide-up flex gap-2">
+                          <AlertCircle className="w-4 h-4 text-emerald-600 dark:text-[#14fac8] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[9px] font-black uppercase tracking-wider text-[#14fac8] block">Buddy Explanation:</span>
-                            <p className="text-[10px] text-zinc-400 dark:text-zinc-400 font-semibold mt-0.5 leading-relaxed">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-[#14fac8] block">Buddy Explanation:</span>
+                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-semibold mt-0.5 leading-relaxed">
                               {m.quiz.explanation}
                             </p>
                           </div>
@@ -312,38 +316,39 @@ export default function BuddyPage() {
           {/* Chat Typing Animation */}
           {isTyping && (
             <div className="flex gap-3 animate-pulse">
-              <div className="w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm shrink-0 flex items-center justify-center p-1 relative overflow-hidden self-end">
-                <Image src={mascot} alt="Mascot" width={24} height={24} className="object-contain" />
+              <div className="w-9 h-9 rounded-full bg-white border-2 border-b-4 border-zinc-200 shadow-md shrink-0 flex items-center justify-center p-1.5 relative overflow-hidden self-end select-none">
+                <Image src={mascot} alt="Mascot" width={28} height={28} className="object-contain" />
               </div>
-              <div className="bg-white dark:bg-[#121214] border border-zinc-200/50 dark:border-zinc-800/80 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-1.5 self-end">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#14fac8] animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#14fac8] animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#14fac8] animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="speech-bubble-left bg-white dark:bg-[#121214] rounded-bl-none px-4 py-3.5 flex items-center gap-1.5 self-end">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-[#14fac8] animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-[#14fac8] animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-[#14fac8] animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           )}
         </div>
       </ScrollArea>
 
-      {/* Input Message panel */}
-      <div className="absolute bottom-16 left-4 right-4 bg-transparent shrink-0 z-20">
-        <div className="bg-white dark:bg-[#121214] border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-2xl p-2 flex items-center gap-2">
+      {/* Input Message panel with tactile adjustments */}
+      <div className="absolute bottom-16 left-4 right-4 bg-transparent shrink-0 z-20 select-none">
+        <div className="bg-white dark:bg-[#121214] border-2 border-zinc-200 dark:border-zinc-800 border-b-6 border-b-zinc-200/60 dark:border-b-zinc-950 shadow-lg rounded-[24px] p-2 flex items-center gap-2">
           <Input
             placeholder={`Ask your ${activeSubject} buddy...`}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            className="flex-1 bg-transparent border-none text-xs focus-visible:ring-0 focus-visible:ring-offset-0 px-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 h-9"
+            className="flex-1 bg-transparent border-none text-xs focus-visible:ring-0 focus-visible:ring-offset-0 px-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 h-9 font-semibold text-zinc-900 dark:text-zinc-150"
           />
           <button
             onClick={handleSend}
-            className="w-9 h-9 rounded-xl bg-[#14fac8] text-[#070a13] flex items-center justify-center hover:bg-[#12dda2] transition-colors active:scale-95 shadow-md"
+            className="w-10 h-10 rounded-2xl bg-[#14fac8] border-2 border-[#14fac8] border-b-4 border-b-[#0ca986] text-[#070a13] flex items-center justify-center hover:bg-[#1efdd0] active:border-b-0 active:translate-y-[4px] transition-all shadow-md cursor-pointer shrink-0"
             title="Send Message"
           >
-            <Send className="w-4 h-4 fill-current" />
+            <Send className="w-3.5 h-3.5 fill-current" />
           </button>
         </div>
       </div>
+
 
     </div>
   );
