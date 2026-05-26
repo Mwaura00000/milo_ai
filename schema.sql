@@ -104,3 +104,10 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- New columns for Cognitive Assessment / Learning Profile
+ALTER TABLE public.profiles 
+  ADD COLUMN IF NOT EXISTS focus_capacity TEXT CHECK (focus_capacity IN ('Sprinter <25m', 'Deep Worker >60m')),
+  ADD COLUMN IF NOT EXISTS energy_rhythm TEXT CHECK (energy_rhythm IN ('Morning Lark', 'Night Owl')),
+  ADD COLUMN IF NOT EXISTS processing_style TEXT CHECK (processing_style IN ('Step-by-Step Builder', 'Big Picture Visionary')),
+  ADD COLUMN IF NOT EXISTS friction_type TEXT CHECK (friction_type IN ('Easily Distracted', 'Easily Overwhelmed'));
+

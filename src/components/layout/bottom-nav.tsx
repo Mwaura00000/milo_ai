@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Timer, Bot, BarChart3 } from "lucide-react";
+import { Calendar, Timer, Bot, BarChart3, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BottomNav() {
@@ -16,6 +16,7 @@ export function BottomNav() {
     { href: "/focus", label: "Focus", icon: Timer },
     { href: "/buddy", label: "Buddy", icon: Bot },
     { href: "/insights", label: "Insights", icon: BarChart3 },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (

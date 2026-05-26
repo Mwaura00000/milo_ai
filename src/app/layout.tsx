@@ -1,8 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Nunito, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-nunito",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-plus-jakarta",
+});
 
 export const metadata: Metadata = {
   title: "Milo | Adaptive Study Coach",
@@ -29,7 +42,7 @@ export default function RootLayout({
       className="h-full antialiased"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#f8fafc] dark:bg-[#090d16] text-foreground font-sans antialiased">
+      <body className={`${nunito.variable} ${plusJakartaSans.variable} min-h-full flex flex-col bg-[#f8fafc] dark:bg-[#090d16] text-foreground font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -47,5 +60,6 @@ export default function RootLayout({
     </html>
   );
 }
+
 
 
