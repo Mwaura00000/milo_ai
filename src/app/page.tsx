@@ -34,6 +34,8 @@ export default function TodayPage() {
   // Track checkmarks pop state (local storage or local states)
   const [completedBlocks, setCompletedBlocks] = useState<Record<string, boolean>>({});
   const [studyPattern, setStudyPattern] = useState<StudyPattern | null>(null);
+  const [timetable, setTimetable] = useState<any[]>([]);
+  const [personaCard, setPersonaCard] = useState<any>(null);
 
   // Grind Mode states
   const [grindActive, setGrindActive] = useState(false);
@@ -82,6 +84,20 @@ export default function TodayPage() {
     const sessions = getSessionsFromStorage();
     const computed = analyzeStudyPatterns(sessions, parsedSubjects);
     setStudyPattern(computed);
+
+    const savedTimetable = localStorage.getItem("milo_timetable");
+    if (savedTimetable) {
+      try {
+        setTimetable(JSON.parse(savedTimetable));
+      } catch (e) {}
+    }
+
+    const savedPersona = localStorage.getItem("milo_persona_card");
+    if (savedPersona) {
+      try {
+        setPersonaCard(JSON.parse(savedPersona));
+      } catch (e) {}
+    }
   }, [router]);
 
   // Dates data matching mockup capsule
@@ -154,7 +170,31 @@ export default function TodayPage() {
     }
   };
 
+  const mapDateToDay = (dateStr: string) => {
+    if (dateStr === "12") return "Monday";
+    if (dateStr === "13") return "Tuesday";
+    if (dateStr === "14") return "Wednesday";
+    if (dateStr === "15") return "Thursday";
+    if (dateStr === "16") return "Friday";
+    return "Monday";
+  };
+
   const compileTimeline = () => {
+    if (timetable && timetable.length > 0) {
+      const targetDay = mapDateToDay(selectedDate);
+      const daySessions = timetable.filter((s: any) => s.day === targetDay);
+      
+      return daySessions.map((session: any, index: number) => ({
+        id: `block-${index}-${selectedDate}`,
+        subject: session.subject,
+        time: `${session.startTime} - ${session.endTime}`,
+        task: session.nudge || `Priority ${session.priority} session.`,
+        ...getSubjectColors(session.subject, index),
+        mascot: getSubjectMascot(session.subject),
+        icon: getSubjectIcon(session.subject)
+      }));
+    }
+
     if (subjectsList.length === 0) return [];
     
     const dateOffset = parseInt(selectedDate) - 12; // 0 for Mon 12, etc.
@@ -317,9 +357,14 @@ export default function TodayPage() {
       <div className="px-6 mt-5 shrink-0 animate-scale-in">
         <div className="bg-white dark:bg-zinc-900 border-2 border-b-6 border-zinc-950 rounded-[28px] p-4 shadow-md text-zinc-800 dark:text-white flex flex-col gap-2 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex flex-col">
               <span className="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Active Scholar</span>
               <h3 className="text-sm font-black text-blue-600 dark:text-[#14fac8] leading-none mt-0.5">{userName}</h3>
+              {personaCard && (
+                <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-wider mt-1">
+                  ★ {personaCard.name}
+                </span>
+              )}
             </div>
             <div className="text-right">
               <span className="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">Term State</span>

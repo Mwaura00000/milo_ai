@@ -46,6 +46,11 @@ export default function ProfilePage() {
   const [grindSubject, setGrindSubject] = useState("");
   const [grindTopic, setGrindTopic] = useState("");
 
+  // Cognitive Engine states
+  const [personaCard, setPersonaCard] = useState<any>(null);
+  const [timetable, setTimetable] = useState<any[]>(null);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+
   useEffect(() => {
     const name = localStorage.getItem("milo_user_name") || "";
     const em = localStorage.getItem("milo_user_email") || "";
@@ -78,7 +83,54 @@ export default function ProfilePage() {
     const sessions = getSessionsFromStorage();
     const computed = analyzeStudyPatterns(sessions, subs);
     setPattern(computed);
+
+    const savedPersona = localStorage.getItem("milo_persona_card");
+    const savedTimetable = localStorage.getItem("milo_timetable");
+    if (savedPersona) setPersonaCard(JSON.parse(savedPersona));
+    if (savedTimetable) setTimetable(JSON.parse(savedTimetable));
   }, []);
+
+  const handleGeneratePlan = async () => {
+    setIsGeneratingPlan(true);
+    try {
+      const payload = {
+        goal: localStorage.getItem("milo_goal") || "long-term-mastery",
+        priorKnowledge: localStorage.getItem("milo_prior_knowledge") || "intermediate",
+        dominantHabit: localStorage.getItem("milo_dominant_habit") || "mix",
+        metacognition: localStorage.getItem("milo_metacognition") || "moderately-calibrated",
+        challenge: localStorage.getItem("milo_challenge") || "concentration",
+        hoursPerWeek: localStorage.getItem("milo_hours_per_week") || "6-10",
+        deadline: localStorage.getItem("milo_deadline") || "none",
+        environment: localStorage.getItem("milo_environment") || "quiet",
+        distraction: localStorage.getItem("milo_distraction") || "medium",
+        motivation: localStorage.getItem("milo_motivation") || "intrinsic",
+        focusStyle: localStorage.getItem("milo_focus_capacity") || "sprint",
+        energyPeak: localStorage.getItem("milo_energy_rhythm") || "morning",
+        processingStyle: localStorage.getItem("milo_processing_style") || "step-by-step",
+        subjects: subjects.map((name, i) => ({ name, priority: i + 1, difficulty: "medium" })),
+        neglectedSubjects: pattern?.neglectedSubjects.map(s => s.name) || []
+      };
+
+      const res = await fetch("/api/cognitive-engine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.personaCard) {
+        setPersonaCard(data.personaCard);
+        localStorage.setItem("milo_persona_card", JSON.stringify(data.personaCard));
+      }
+      if (data.timetable) {
+        setTimetable(data.timetable);
+        localStorage.setItem("milo_timetable", JSON.stringify(data.timetable));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
 
   const handleSaveProfile = () => {
     localStorage.setItem("milo_user_name", editName);
@@ -194,9 +246,16 @@ export default function ProfilePage() {
                   placeholder="Your name"
                 />
               ) : (
-                <h2 className="text-sm font-black text-zinc-900 dark:text-white truncate">
-                  {userName || "Scholar"}
-                </h2>
+                <div className="flex flex-col">
+                  <h2 className="text-sm font-black text-zinc-900 dark:text-white truncate">
+                    {userName || "Scholar"}
+                  </h2>
+                  {personaCard && (
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-wider block mt-0.5">
+                      {personaCard.name}
+                    </span>
+                  )}
+                </div>
               )}
               {email && (
                 <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-0.5 truncate">{email}</p>
@@ -351,6 +410,84 @@ export default function ProfilePage() {
                 <span className="text-[8px] font-black text-red-600 dark:text-red-400 leading-normal">
                   Grind Mode synchronizes with the Socratic AI Coach and locks focus timers on this target.
                 </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Master Plan / Cognitive Engine ── */}
+      <div className="px-4 pt-3 select-none">
+        <div className="bg-white dark:bg-zinc-900 border-2 border-b-4 border-zinc-950 rounded-[20px] p-4 shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-indigo-500" />
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300 block">
+                  Cognitive Master Plan
+                </span>
+                <span className="text-[8px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
+                  AI-Optimized Strategy
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={handleGeneratePlan}
+              disabled={isGeneratingPlan}
+              className="text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl border border-zinc-950 shadow-sm transition-all cursor-pointer bg-indigo-500 hover:bg-indigo-400 text-white disabled:opacity-50"
+            >
+              {isGeneratingPlan ? "Generating..." : (personaCard ? "Regenerate" : "Generate Plan")}
+            </button>
+          </div>
+
+          {personaCard && (
+            <div className="space-y-4 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+              <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+                <span className="text-[9px] font-black uppercase text-indigo-500 mb-1 block">Your Persona: {personaCard.name}</span>
+                <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                  {personaCard.description}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[9px] font-black uppercase text-zinc-500 block">Core Strategies</span>
+                {personaCard.strategies.map((strategy: string, idx: number) => (
+                  <div key={idx} className="flex gap-2 p-2 bg-slate-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg">
+                    <span className="text-emerald-500 text-xs">✔</span>
+                    <span className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200">{strategy}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {timetable && timetable.length > 0 && (
+            <div className="mt-5 space-y-3">
+              <span className="text-[10px] font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300 block">7-Day Timetable</span>
+              <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                {timetable.map((session: any, idx: number) => (
+                  <div key={idx} className="bg-slate-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3">
+                    <div className="flex justify-between items-start mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black text-zinc-900 dark:text-white bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-md">
+                          {session.day}
+                        </span>
+                        <span className="text-[10px] font-bold text-zinc-500">
+                          {session.startTime} - {session.endTime}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-black uppercase text-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/50">
+                        P{session.priority}
+                      </span>
+                    </div>
+                    <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 block mb-1.5">
+                      {session.subject}
+                    </span>
+                    <div className="text-[9px] font-medium text-zinc-500 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded p-1.5 italic">
+                      "{session.nudge}"
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

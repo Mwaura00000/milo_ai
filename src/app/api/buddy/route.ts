@@ -4,11 +4,11 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 
 const GEMINI_MODELS = [
-  "gemini-2.5-flash",
+  "gemini-1.5-pro",
+  "gemini-1.5-flash",
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro",
+  "gemini-2.5-flash",
 ];
 
 export async function POST(req: NextRequest) {
@@ -85,8 +85,34 @@ export async function POST(req: NextRequest) {
           maxSteps: 3, // Support multi-step execution (tool calling + final output generation)
         } as any);
 
+        let finalText = response.text || "";
+        if (finalText.trim() === "" && response.toolResults && response.toolResults.length > 0) {
+          const results = response.toolResults[0].output?.results || [];
+          if (results.length > 0) {
+            console.log("Empty text after tool call. Forcing synthesis...");
+            const synthesisResponse = await generateText({
+              model: google(modelName),
+              system: "You are Milo. Summarize the following search results into a cohesive, highly concise Socratic answer (max 3 sentences) that answers the user's implicit question. Do not just list the sources; synthesize the knowledge.",
+              messages: [
+                ...aiSdkMessages,
+                {
+                  role: "assistant",
+                  content: "I searched the web and found: " + JSON.stringify(results)
+                }
+              ]
+            });
+            finalText = synthesisResponse.text || "I found some information, but I'm having trouble summarizing it right now.";
+          }
+        }
+
+        if (!finalText || finalText.trim() === "") {
+          console.error("Empty text response. Tool calls:", response.toolCalls);
+          console.error("Tool results:", response.toolResults);
+          throw new Error("Empty text. ToolCalls: " + JSON.stringify(response.toolCalls) + " ToolResults: " + JSON.stringify(response.toolResults));
+        }
+
         console.log(`✓ Gemini responded via Vercel AI SDK using ${modelName}`);
-        return NextResponse.json({ text: response.text, model: modelName });
+        return NextResponse.json({ text: finalText, model: modelName });
       } catch (err: any) {
         const errText = err?.message || String(err);
         console.warn(`Model ${modelName} failed or was rate-limited:`, errText);

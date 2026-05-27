@@ -243,10 +243,16 @@ export default function WelcomePage() {
             )}
           </button>
           <Link 
-            href="/onboarding"
-            className="px-5 py-2.5 rounded-2xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white border-2 border-b-4 border-zinc-950 active:translate-y-[2px] active:border-b-2 transition-all cursor-pointer"
+            href="/onboarding?mode=register"
+            className="px-4 py-2 rounded-2xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white border-2 border-b-4 border-zinc-950 active:translate-y-[2px] active:border-b-2 transition-all cursor-pointer"
           >
-            Register / Sign In
+            Register
+          </Link>
+          <Link 
+            href="/onboarding?mode=signin"
+            className="px-4 py-2 rounded-2xl text-xs font-black bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border-2 border-b-4 border-zinc-950 active:translate-y-[2px] active:border-b-2 transition-all cursor-pointer"
+          >
+            Sign In
           </Link>
         </div>
       </header>

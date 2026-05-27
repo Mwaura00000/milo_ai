@@ -39,10 +39,10 @@ export default function OnboardingPage() {
 
   // Dynamic Units Builder
   const [predefinedUnits, setPredefinedUnits] = useState([
-    { name: "Introduction to Programming", active: true },
-    { name: "Calculus I", active: true },
-    { name: "Communication Skills", active: false },
-    { name: "Economics 101", active: false },
+    { name: "Unit 1", active: true },
+    { name: "Unit 2", active: true },
+    { name: "Unit 3", active: false },
+    { name: "Unit 4", active: false },
   ]);
 
   const [customUnitInput, setCustomUnitInput] = useState("");
@@ -139,7 +139,7 @@ export default function OnboardingPage() {
         } else {
           localStorage.setItem("milo_user_name", userName);
           localStorage.setItem("milo_user_uni", "University of Nairobi");
-          localStorage.setItem("milo_user_course", "B.Sc. Computer Science");
+          localStorage.setItem("milo_user_course", "Undergraduate");
           localStorage.setItem("milo_user_year_sem", "Year 1 - Semester 1");
         }
 
@@ -149,14 +149,16 @@ export default function OnboardingPage() {
           const subNames = subjects.map((s: any) => s.name);
           localStorage.setItem("milo_active_subjects", JSON.stringify(subNames));
         } else {
-          localStorage.setItem("milo_active_subjects", JSON.stringify(["Introduction to Programming", "Calculus I"]));
+          const fallbackCourse = profile?.course || "Undergraduate";
+          const fallbackUnits = COURSE_UNITS_REGISTRY[fallbackCourse]?.slice(0, 4) || GLOBAL_STANDARD_UNITS.slice(0, 4);
+          localStorage.setItem("milo_active_subjects", JSON.stringify(fallbackUnits));
         }
       } else {
         localStorage.setItem("milo_user_name", userName);
         localStorage.setItem("milo_user_uni", "University of Nairobi");
-        localStorage.setItem("milo_user_course", "B.Sc. Computer Science");
+        localStorage.setItem("milo_user_course", "Undergraduate");
         localStorage.setItem("milo_user_year_sem", "Year 1 - Semester 1");
-        localStorage.setItem("milo_active_subjects", JSON.stringify(["Introduction to Programming", "Calculus I"]));
+        localStorage.setItem("milo_active_subjects", JSON.stringify(GLOBAL_STANDARD_UNITS.slice(0, 4)));
       }
 
       router.push("/");
@@ -255,39 +257,65 @@ export default function OnboardingPage() {
     setIsDragging(false);
   };
 
+  const processUploadedFile = async (file: File) => {
+    setUploadedFileName(file.name);
+    setUploadLoading(true);
+    setErrorMsg("");
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = (reader.result as string).split(",")[1];
+        const mimeType = file.type || "image/jpeg";
+
+        const response = await fetch("/api/extract-units", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ base64Data, mimeType }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to call vision extraction API");
+        }
+
+        const data = await response.json();
+        if (data.units && Array.isArray(data.units) && data.units.length > 0) {
+          setCustomUnits(data.units);
+          setErrorMsg("");
+        } else {
+          throw new Error("No units returned from vision OCR extraction");
+        }
+      } catch (err) {
+        console.error("Live vision module extraction failed:", err);
+        setCustomUnits([]);
+        setErrorMsg("Sorry, the document text recognition failed to read your image. Please add your units manually below.");
+      } finally {
+        setUploadLoading(false);
+      }
+    };
+
+    reader.onerror = () => {
+      setErrorMsg("Failed to read file.");
+      setUploadLoading(false);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
-
-    setUploadedFileName(file.name);
-    setUploadLoading(true);
-    setErrorMsg("");
-
-    setTimeout(() => {
-      setUploadLoading(false);
-      const programUnits = COURSE_UNITS_REGISTRY[course] || GLOBAL_STANDARD_UNITS;
-      // Take the first 4-5 units to populate as mock extracted units
-      const mockUnits = programUnits.slice(0, 5);
-      setCustomUnits(mockUnits);
-    }, 1500);
+    await processUploadedFile(file);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setUploadedFileName(file.name);
-    setUploadLoading(true);
-    setErrorMsg("");
-
-    setTimeout(() => {
-      setUploadLoading(false);
-      const programUnits = COURSE_UNITS_REGISTRY[course] || GLOBAL_STANDARD_UNITS;
-      const mockUnits = programUnits.slice(0, 5);
-      setCustomUnits(mockUnits);
-    }, 1500);
+    await processUploadedFile(file);
   };
 
   const filteredUniversities = KENYAN_UNIVERSITIES.filter(uni => 
