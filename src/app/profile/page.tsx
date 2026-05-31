@@ -48,7 +48,7 @@ export default function ProfilePage() {
 
   // Cognitive Engine states
   const [personaCard, setPersonaCard] = useState<any>(null);
-  const [timetable, setTimetable] = useState<any[]>(null);
+  const [timetable, setTimetable] = useState<any[]>([]);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
 
   useEffect(() => {

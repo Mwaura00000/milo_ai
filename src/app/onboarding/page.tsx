@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { BookOpen, GraduationCap, Plus, ArrowRight, UserPlus, Sparkles, Check, ArrowLeft, Lock, Eye, EyeOff, LogIn, Upload, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { KENYAN_UNIVERSITIES, UNIVERSITY_COURSES } from "@/lib/kenya-universities";
+
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -276,17 +276,18 @@ export default function OnboardingPage() {
           body: JSON.stringify({ base64Data, mimeType }),
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to call vision extraction API");
+        const data = await response.json();
+
+        if (!response.ok || !data.units || !Array.isArray(data.units) || data.units.length === 0) {
+          // Non-fatal: let the user add units manually
+          setErrorMsg("Could not auto-extract units from your file. Please add your semester units manually below.");
+          setUploadedFileName("");
+          setUploadLoading(false);
+          return;
         }
 
-        const data = await response.json();
-        if (data.units && Array.isArray(data.units) && data.units.length > 0) {
-          setCustomUnits(data.units);
-          setErrorMsg("");
-        } else {
-          throw new Error("No units returned from vision OCR extraction");
-        }
+        setCustomUnits(data.units);
+        setErrorMsg("");
       } catch (err) {
         console.error("Live vision module extraction failed:", err);
         setCustomUnits([]);
@@ -318,13 +319,6 @@ export default function OnboardingPage() {
     await processUploadedFile(file);
   };
 
-  const filteredUniversities = KENYAN_UNIVERSITIES.filter(uni => 
-    uni.toLowerCase().includes(university.toLowerCase())
-  );
-
-  const filteredCourses = UNIVERSITY_COURSES.filter(c => 
-    c.toLowerCase().includes(course.toLowerCase())
-  );
 
   return (
     <div className="min-h-screen bg-[#fffdf9] dark:bg-[#0c0e17] text-zinc-900 dark:text-zinc-100 flex flex-col justify-start items-center p-6 font-sans relative overflow-x-hidden transition-colors duration-300">
@@ -605,40 +599,11 @@ export default function OnboardingPage() {
                   <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
                 </div>
 
-                {/* PATH B: SMART FORM WITH AUTOCOMPLETE */}
+                {/* PATH B: SMART FORM - Units Selection Only */}
                 <div className="space-y-4">
                   <span className="text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[9px] block text-left">Path B: Smart Manual Form</span>
 
-                  {/* University Selector */}
-                  <div className="space-y-1.5 text-left relative">
-                    <label className="text-zinc-500 dark:text-zinc-400 block uppercase tracking-wider text-[9px]">Select University</label>
-                    <select
-                      value={university}
-                      onChange={(e) => setUniversity(e.target.value)}
-                      className="w-full h-11 bg-white dark:bg-zinc-900 border-2 border-zinc-950 text-zinc-900 dark:text-white rounded-2xl px-3 focus:outline-none focus:ring-4 focus:ring-blue-500/25 transition-all font-semibold shadow-sm text-xs"
-                    >
-                      {KENYAN_UNIVERSITIES.map((uni) => (
-                        <option key={uni} value={uni}>{uni}</option>
-                      ))}
-                    </select>
-                  </div>
 
-                  {/* Course Selector */}
-                  <div className="space-y-1.5 text-left relative">
-                    <label className="text-zinc-500 dark:text-zinc-400 block uppercase tracking-wider text-[9px]">Select Degree Course</label>
-                    <select
-                      value={course}
-                      onChange={(e) => setCourse(e.target.value)}
-                      className="w-full h-11 bg-white dark:bg-zinc-900 border-2 border-zinc-950 text-zinc-900 dark:text-white rounded-2xl px-3 focus:outline-none focus:ring-4 focus:ring-blue-500/25 transition-all font-semibold shadow-sm text-xs"
-                    >
-                      <option value="" disabled>-- Select Degree Course --</option>
-                      {UNIVERSITY_COURSES.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Selected Units Removable Badges */}
                   {customUnits.length > 0 && (
                     <div className="space-y-1 text-left">
                       <label className="text-zinc-500 dark:text-zinc-400 block uppercase tracking-wider text-[9px] mb-1">Selected Semester Units ({customUnits.length})</label>

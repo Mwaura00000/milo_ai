@@ -43,7 +43,6 @@ CRITICAL TOOL CALLING COMMANDS:
     const result = streamText({
       model: google("gemini-1.5-flash"),
       system: systemPrompt,
-      maxSteps: 5,
       messages,
       tools: {
         query_university_matrix: tool({

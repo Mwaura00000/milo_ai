@@ -201,6 +201,27 @@
   animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
+@keyframes timer-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(20, 250, 200, 0); }
+  50%       { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(20, 250, 200, 0.15); }
+}
+
+.animate-timer-pulse {
+  animation: timer-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.animate-shake {
+  animation: shake 0.45s ease-in-out;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

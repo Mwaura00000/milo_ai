@@ -10,6 +10,7 @@ import {
   getSessionsFromStorage,
   type StudyPattern,
 } from "@/lib/study-patterns";
+import { generateSmartSchedule, type StudySession } from "@/lib/smart-scheduler";
 
 export default function TodayPage() {
   const { theme, setTheme } = useTheme();
@@ -28,13 +29,16 @@ export default function TodayPage() {
   const [processingStyle, setProcessingStyle] = useState("");
   const [frictionType, setFrictionType] = useState("");
   
-  // Active date selection state (Wed 14 is default)
-  const [selectedDate, setSelectedDate] = useState("14");
+  // Active date selection state
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (typeof window !== "undefined") return new Date().toISOString().split('T')[0];
+    return "2024-01-01"; // fallback
+  });
 
   // Track checkmarks pop state (local storage or local states)
   const [completedBlocks, setCompletedBlocks] = useState<Record<string, boolean>>({});
   const [studyPattern, setStudyPattern] = useState<StudyPattern | null>(null);
-  const [timetable, setTimetable] = useState<any[]>([]);
+  const [timetable, setTimetable] = useState<StudySession[]>([]);
   const [personaCard, setPersonaCard] = useState<any>(null);
 
   // Grind Mode states
@@ -90,6 +94,19 @@ export default function TodayPage() {
       try {
         setTimetable(JSON.parse(savedTimetable));
       } catch (e) {}
+    } else {
+      // Auto-generate Smart Schedule if missing
+      const ePeak = localStorage.getItem("milo_energy_rhythm") || "Morning";
+      const fCap = localStorage.getItem("milo_focus_capacity") || "Sprint";
+      
+      const newSchedule = generateSmartSchedule(
+        finalSubjects.length > 0 ? finalSubjects : ["Core Subject"],
+        ePeak as any, 
+        fCap as any, 
+        new Date()
+      );
+      setTimetable(newSchedule);
+      localStorage.setItem("milo_timetable", JSON.stringify(newSchedule));
     }
 
     const savedPersona = localStorage.getItem("milo_persona_card");
@@ -100,14 +117,32 @@ export default function TodayPage() {
     }
   }, [router]);
 
-  // Dates data matching mockup capsule
-  const dates = [
-    { day: "Mon", date: "12" },
-    { day: "Tue", date: "13" },
-    { day: "Wed", date: "14" },
-    { day: "Today", date: "15" },
-    { day: "Fri", date: "16" },
-  ];
+  // Dynamically extract unique dates from timetable (up to 5 to fit UI)
+  let dates = timetable.reduce((acc: any[], session: StudySession) => {
+    if (!acc.find(d => d.date === session.date)) {
+      const dObj = new Date(session.date);
+      const dayShort = dObj.toLocaleDateString('en-US', { weekday: 'short' });
+      const dateNum = dObj.getDate().toString();
+      const isToday = new Date().toISOString().split('T')[0] === session.date;
+      acc.push({
+        day: isToday ? "Today" : dayShort,
+        date: session.date, // The full YYYY-MM-DD
+        dateNum: dateNum,   // Just the number for display
+      });
+    }
+    return acc;
+  }, []).slice(0, 5);
+
+  // Fallback if missing
+  if (dates.length === 0) {
+    dates = [
+      { day: "Mon", date: "12", dateNum: "12" },
+      { day: "Tue", date: "13", dateNum: "13" },
+      { day: "Wed", date: "14", dateNum: "14" },
+      { day: "Today", date: "15", dateNum: "15" },
+      { day: "Fri", date: "16", dateNum: "16" },
+    ];
+  }
 
   // Mascot mapping with fallback owl logo for custom subjects
   const getSubjectMascot = (subjectName: string) => {
@@ -170,65 +205,22 @@ export default function TodayPage() {
     }
   };
 
-  const mapDateToDay = (dateStr: string) => {
-    if (dateStr === "12") return "Monday";
-    if (dateStr === "13") return "Tuesday";
-    if (dateStr === "14") return "Wednesday";
-    if (dateStr === "15") return "Thursday";
-    if (dateStr === "16") return "Friday";
-    return "Monday";
-  };
-
   const compileTimeline = () => {
     if (timetable && timetable.length > 0) {
-      const targetDay = mapDateToDay(selectedDate);
-      const daySessions = timetable.filter((s: any) => s.day === targetDay);
+      // Filter by the EXACT YYYY-MM-DD
+      const daySessions = timetable.filter((s: StudySession) => s.date === selectedDate);
       
-      return daySessions.map((session: any, index: number) => ({
-        id: `block-${index}-${selectedDate}`,
-        subject: session.subject,
+      return daySessions.map((session: StudySession, index: number) => ({
+        id: `block-${index}-${session.date}`,
+        subject: session.unitName,
         time: `${session.startTime} - ${session.endTime}`,
-        task: session.nudge || `Priority ${session.priority} session.`,
-        ...getSubjectColors(session.subject, index),
-        mascot: getSubjectMascot(session.subject),
-        icon: getSubjectIcon(session.subject)
+        task: session.type === "reading" ? `${session.unitName} encoding and comprehension.` : `${session.unitName} active retrieval and practice.`,
+        ...getSubjectColors(session.unitName, index),
+        mascot: getSubjectMascot(session.unitName),
+        icon: getSubjectIcon(session.unitName)
       }));
     }
-
-    if (subjectsList.length === 0) return [];
-    
-    const dateOffset = parseInt(selectedDate) - 12; // 0 for Mon 12, etc.
-    
-    const subjectA = subjectsList[dateOffset % subjectsList.length];
-    const subjectB = subjectsList[(dateOffset + 1) % subjectsList.length];
-
-    if (!subjectA) return [];
-
-    const blocks = [
-      {
-        id: `block-1-${selectedDate}`,
-        subject: subjectA,
-        time: "10:00 AM",
-        task: `${subjectA} active review and quiz recap session.`,
-        ...getSubjectColors(subjectA, 0),
-        mascot: getSubjectMascot(subjectA),
-        icon: getSubjectIcon(subjectA)
-      }
-    ];
-
-    if (subjectB && subjectB !== subjectA) {
-      blocks.push({
-        id: `block-2-${selectedDate}`,
-        subject: subjectB,
-        time: "11:30 AM",
-        task: `${subjectB} syllabus mastery drill.`,
-        ...getSubjectColors(subjectB, 1),
-        mascot: getSubjectMascot(subjectB),
-        icon: getSubjectIcon(subjectB)
-      });
-    }
-
-    return blocks;
+    return [];
   };
 
   const activeSchedules = compileTimeline();
@@ -499,7 +491,7 @@ export default function TodayPage() {
         <div className="flex gap-2 justify-between items-center py-2 min-w-max">
           {dates.map((d) => {
             const isToday = d.day === "Today";
-            const isSelected = selectedDate === d.date || (selectedDate === "14" && d.date === "14");
+            const isSelected = selectedDate === d.date || (selectedDate === "2024-01-01" && isToday);
             
             let dateStyle = "bg-white text-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 border-2 border-b-4 border-zinc-950";
             if (isToday) {
@@ -515,7 +507,7 @@ export default function TodayPage() {
                 className={`flex flex-col items-center justify-center w-14 h-18 rounded-2xl transition-all duration-150 select-none hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-2 cursor-pointer ${dateStyle}`}
               >
                 <span className="text-[10px] font-black block uppercase tracking-tight opacity-75">{d.day}</span>
-                <span className="text-lg font-black mt-0.5 leading-none">{d.date}</span>
+                <span className="text-lg font-black mt-0.5 leading-none">{d.dateNum}</span>
               </button>
             );
           })}

@@ -70,7 +70,9 @@ export default function FocusPage() {
   const [interruptions, setInterruptions] = useState(0);
   const [showLogModal, setShowLogModal] = useState(false);
   const [masteryRating, setMasteryRating] = useState(4);
-  
+  // Distraction telemetry count (auto-logged by Page Visibility API)
+  const [distractionEvents, setDistractionEvents] = useState(0);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -78,6 +80,52 @@ export default function FocusPage() {
       setTimeLeft(durationMinutes * 60);
     }
   }, [durationMinutes, isRunning]);
+
+  // ── Cognitive Persona: set default duration from stored persona card ──────
+  useEffect(() => {
+    try {
+      const rawCard = localStorage.getItem("milo_persona_card");
+      if (rawCard) {
+        const card = JSON.parse(rawCard);
+        // Field lives at personaCard.tags.focusStyle: "Sprint" | "Marathon"
+        const style: string = card?.tags?.focusStyle || card?.focusStyle || "";
+        if (style.toLowerCase().includes("marathon") || style.toLowerCase().includes("deep")) {
+          setDurationMinutes(50);
+          setTimeLeft(50 * 60);
+        } else {
+          // Sprint / default
+          setDurationMinutes(25);
+          setTimeLeft(25 * 60);
+        }
+      }
+    } catch {
+      // Silently ignore parse errors; keep default 25 min
+    }
+  }, []);
+
+  // ── Page Visibility API: auto-log distraction when user leaves tab ────────
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        setInterruptions(prev => prev + 1);
+        setDistractionEvents(prev => prev + 1);
+        try {
+          const log = JSON.parse(localStorage.getItem("milo_distraction_log") || "[]");
+          log.push({
+            type: "tab-blur",
+            subject,
+            timestamp: new Date().toISOString(),
+          });
+          localStorage.setItem("milo_distraction_log", JSON.stringify(log));
+        } catch { /* ignore */ }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [isRunning, subject]);
 
   useEffect(() => {
     if (isRunning) {
@@ -165,32 +213,33 @@ export default function FocusPage() {
   return (
     <div className="flex flex-col h-full dot-grid-bg-light dark:dot-grid-bg bg-[#fffdf9] dark:bg-[#0c0e17] text-foreground transition-colors duration-300 overflow-y-auto no-scrollbar pb-32">
       
-      {/* Title */}
-      <div className="px-6 pt-8 shrink-0 flex items-center justify-between z-10 select-none">
-        <div className="flex items-center gap-3">
+      {/* Title — fixed header: no clipping, clean flex alignment */}
+      <div className="px-6 pt-6 pb-2 shrink-0 flex items-center justify-between gap-3 z-10 select-none">
+        <div className="flex items-center gap-3 min-w-0">
           <button 
             onClick={() => router.push("/")}
-            className="w-10 h-10 rounded-2xl bg-white dark:bg-zinc-900 border-2 border-b-4 border-zinc-950 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-zinc-800 text-zinc-800 dark:text-white transition-all active:translate-y-[2px] active:border-b-2 shadow-sm cursor-pointer animate-scale-in"
+            className="w-10 h-10 shrink-0 rounded-2xl bg-white dark:bg-zinc-900 border-2 border-b-4 border-zinc-950 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-zinc-800 text-zinc-800 dark:text-white transition-all active:translate-y-[2px] active:border-b-2 shadow-sm cursor-pointer animate-scale-in"
             title="Go Back"
           >
             <ArrowLeft className="w-4 h-4 stroke-[3.5]" />
           </button>
-          <div>
-            <h1 className="text-3xl font-black tracking-tight leading-none text-slate-800 dark:text-zinc-50 font-heading">Focus Timer</h1>
-            <div className="flex flex-col gap-1 mt-1.5 select-none">
-              <p className="text-xs text-slate-500 dark:text-zinc-400 font-semibold leading-none">
-                Active Subject: <span className={accentColor}>{subject}</span>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-black tracking-tight leading-none text-slate-800 dark:text-zinc-50 font-heading truncate">Focus Timer</h1>
+            <div className="flex flex-col gap-1 mt-1 select-none">
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-semibold leading-none truncate">
+                <span className={accentColor}>{subject}</span>
               </p>
               {grindActive && (
-                <span className="inline-flex items-center w-fit px-2.5 py-1 rounded-xl bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 text-[9px] font-black text-red-500 uppercase tracking-widest mt-1 animate-pulse">
-                  🎯 Focus Target: Master {grindTopic || "Custom Topic"}
+                <span className="inline-flex items-center w-fit px-2.5 py-0.5 rounded-xl bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 text-[9px] font-black text-red-500 uppercase tracking-widest animate-pulse">
+                  🎯 {grindTopic || "Grind Mode"}
                 </span>
               )}
             </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-1 text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 border border-amber-250 dark:border-amber-450 px-2.5 py-1.5 rounded-full animate-pulse-glow shadow-sm select-none">
+
+        {/* Pomodoro badge — shrink-0 so it never wraps or overlaps title */}
+        <div className="shrink-0 flex items-center gap-1 text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 border border-amber-200 dark:border-amber-500/30 px-2.5 py-1.5 rounded-full animate-pulse-glow shadow-sm select-none">
           <Sparkles className="w-3 h-3" strokeWidth={3} />
           POMODORO
         </div>
@@ -252,21 +301,23 @@ export default function FocusPage() {
           {/* Central mascot & countdown */}
           <div className="absolute z-20 flex flex-col items-center text-center">
             
-            {/* Mascot circular sticker */}
-            <div className="w-24 h-24 rounded-full bg-white dark:bg-zinc-900 p-3.5 shadow-md border-2 border-zinc-950 border-b-6 border-b-zinc-950 flex items-center justify-center relative overflow-hidden mb-2 group hover:rotate-6 active:-rotate-6 transition-all duration-350 select-none">
+            {/* Mascot circular sticker — pulses only when timer is running */}
+            <div className={`w-24 h-24 rounded-full bg-white dark:bg-zinc-900 p-3.5 shadow-md border-2 border-zinc-950 border-b-6 border-b-zinc-950 flex items-center justify-center relative overflow-hidden mb-2 hover:rotate-6 active:-rotate-6 transition-all duration-350 select-none ${
+              isRunning ? "animate-timer-pulse" : ""
+            }`}>
               <Image 
                 src={mascot} 
                 alt="Subject Mascot" 
                 width={64} 
                 height={64} 
-                className="object-contain animate-float"
+                className={`object-contain ${!isRunning ? "animate-float" : ""}`}
               />
             </div>
 
+            {/* Timer digits — kept clean, no micro-text */}
             <span className="text-4xl font-black tracking-tight tabular-nums font-mono leading-none text-zinc-850 dark:text-white mt-1">
               {formatTime(timeLeft)}
             </span>
-            <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-extrabold uppercase tracking-widest mt-1.5">{subject}</p>
           </div>
         </div>
 

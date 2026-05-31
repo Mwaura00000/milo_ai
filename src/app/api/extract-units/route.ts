@@ -41,23 +41,42 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(visionPayload),
-    });
+    // Try gemini-1.5-pro first, fall back to gemini-1.5-flash
+    const VISION_MODELS = ["gemini-1.5-pro", "gemini-1.5-flash"];
+    let lastStatus = 0;
+    let lastStatusText = "";
 
-    if (!response.ok) {
-      console.error("Gemini Vision API error status:", response.status);
-      return NextResponse.json({ error: `Vision model error: ${response.statusText}` }, { status: 502 });
+    for (const modelName of VISION_MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(visionPayload),
+      });
+
+      if (!response.ok) {
+        lastStatus = response.status;
+        lastStatusText = response.statusText;
+        console.warn(`Vision model ${modelName} returned ${response.status}. Trying next...`);
+        continue;
+      }
+
+      const resData = await response.json();
+      const parsedText = resData?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+      
+      try {
+        const parsedUnits = JSON.parse(parsedText.trim());
+        return NextResponse.json({ units: Array.isArray(parsedUnits) ? parsedUnits : [] });
+      } catch (parseErr) {
+        console.error("Failed to parse JSON from vision model:", parsedText);
+        // Return empty units so the user can add manually — don't hard-fail
+        return NextResponse.json({ units: [] });
+      }
     }
 
-    const resData = await response.json();
-    const parsedText = resData?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-    const parsedUnits = JSON.parse(parsedText.trim());
-
-    return NextResponse.json({ units: Array.isArray(parsedUnits) ? parsedUnits : [] });
+    // All models failed
+    console.error(`All vision models failed. Last status: ${lastStatus} ${lastStatusText}`);
+    return NextResponse.json({ units: [], error: `Vision model unavailable (${lastStatus})` }, { status: 200 });
   } catch (error: any) {
     console.error("API extract units error:", error);
     return NextResponse.json({ error: "Internal server error", details: error.message }, { status: 500 });
