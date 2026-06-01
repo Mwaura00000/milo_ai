@@ -133,15 +133,20 @@ export default function TodayPage() {
     return acc;
   }, []).slice(0, 5);
 
-  // Fallback if missing
+  // Fallback if missing — generate real dates relative to today
   if (dates.length === 0) {
-    dates = [
-      { day: "Mon", date: "12", dateNum: "12" },
-      { day: "Tue", date: "13", dateNum: "13" },
-      { day: "Wed", date: "14", dateNum: "14" },
-      { day: "Today", date: "15", dateNum: "15" },
-      { day: "Fri", date: "16", dateNum: "16" },
-    ];
+    const today = new Date();
+    dates = [-1, 0, 1, 2, 3].map((offset) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + offset);
+      const isoDate = d.toISOString().split("T")[0];
+      const isToday = offset === 0;
+      return {
+        day: isToday ? "Today" : d.toLocaleDateString("en-US", { weekday: "short" }),
+        date: isoDate,
+        dateNum: d.getDate().toString(),
+      };
+    });
   }
 
   // Mascot mapping with fallback owl logo for custom subjects

@@ -20,7 +20,7 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 z-50">
+    <div className="fixed bottom-4 left-4 right-4 z-50">
       <nav className="bg-[#18181b]/95 dark:bg-[#121214]/95 border border-zinc-200/20 dark:border-zinc-800/80 rounded-[28px] shadow-[0_10px_30px_-5px_rgba(0,0,0,0.3)] dark:shadow-[0_15px_40px_-5px_rgba(0,0,0,0.8)] backdrop-blur-md px-2 py-2">
         <div className="flex h-12 items-center justify-around">
           {navItems.map((item) => {

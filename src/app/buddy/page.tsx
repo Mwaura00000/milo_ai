@@ -593,6 +593,8 @@ export default function BuddyPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Holds the real loaded userName so generateGreeting can access it without waiting for React state
+  const userNameRef = useRef<string>("");
 
   // Profile
   const [userName, setUserName] = useState("");
@@ -608,7 +610,9 @@ export default function BuddyPage() {
 
   // Load profile + subjects + pattern + persona
   useEffect(() => {
-    setUserName(localStorage.getItem("milo_user_name") || "Scholar");
+    const name = localStorage.getItem("milo_user_name") || "";
+    userNameRef.current = name;
+    setUserName(name || "Scholar");
     setUniversity(localStorage.getItem("milo_user_uni") || "University of Nairobi");
     setCourse(localStorage.getItem("milo_user_course") || "Undergraduate");
     setYearSem(localStorage.getItem("milo_user_year_sem") || "Year 1 Semester 1");
@@ -672,7 +676,9 @@ export default function BuddyPage() {
   }, []);
 
   const generateGreeting = useCallback(async (isReset = false) => {
-    if (!userName) return;
+    // Use the ref value so this fires reliably even before React state settles
+    const currentName = userNameRef.current || userName;
+    if (!currentName) return;
     if (isReset) {
       localStorage.removeItem(`milo_chat_messages_${activeSubject}`);
       localStorage.removeItem(`milo_chat_history_${activeSubject}`);
@@ -681,10 +687,13 @@ export default function BuddyPage() {
     setGeminiHistory([]);
 
     // Build context-aware greeting prompt
-    let greetingPrompt = `Greet ${userName} warmly (1–2 sentences max). `;
+    let greetingPrompt = `Greet ${currentName} warmly (1–2 sentences max). `;
     
     const chatDiagnosticCompleted = localStorage.getItem("milo_chat_diagnostic_completed") === "true";
-    const isDiagnosticRequired = isReset || !chatDiagnosticCompleted;
+    const assessmentCompleted = localStorage.getItem("milo_assessment_completed") === "true";
+    // Don't re-run diagnostic if the student already completed either the onboarding assessment
+    // or a previous in-chat diagnostic session
+    const isDiagnosticRequired = isReset && !assessmentCompleted && !chatDiagnosticCompleted;
     
     if (isDiagnosticRequired) {
       greetingPrompt += `Introduce yourself as Milo, the expert cognitive study coach, and explain that you want to run a quick 11-question cognitive study diagnostic to map their learning personality blueprint and build an evidence-based study strategy and Pomodoro schedule. Ask the first 2 or 3 diagnostic questions from your directives list (Goal, Familiarity, and Study Habit) to get started.`;
@@ -721,7 +730,7 @@ export default function BuddyPage() {
     setIsLoading(true);
     try {
       const sysPrompt = buildSystemPrompt(
-        userName, university, course, yearSem, subjectsList, activeSubject, pattern,
+        userNameRef.current || userName, university, course, yearSem, subjectsList, activeSubject, pattern,
         focusCapacity, energyRhythm, processingStyle, frictionType,
         grindActive, grindSubject, grindTopic, personaCard, isWeeklyReflection
       );
@@ -734,7 +743,7 @@ export default function BuddyPage() {
         }),
       });
       const data = await res.json();
-      const text: string = data.text || "Sasa! I'm your Milo AI coach. What would you like to study today?";
+      const text: string = data.text || `Hello! I am Milo, your cognitive study coach for ${activeSubject}. Ask me anything, request a quiz, or say "flashcards"!`;
 
       const parsed = parseGeminiResponse(text);
       const greetMsg: Message = { id: crypto.randomUUID(), role: "assistant", ...parsed };
@@ -748,7 +757,7 @@ export default function BuddyPage() {
         id: crypto.randomUUID(),
         role: "assistant",
         type: "chat",
-        content: `Sasa ${userName}! I'm your Milo AI study coach for ${activeSubject}. Ask me a question, request a quiz, or say "flashcards" to get study cards!`,
+        content: `Sawa! I am Milo, your cognitive study coach for ${activeSubject}. Ask me a question, say "quiz" to test yourself, or say "flashcards" for a quick review session.`,
       }]);
     } finally {
       setIsLoading(false);
@@ -766,14 +775,22 @@ export default function BuddyPage() {
 
   // Load messages & history from local storage when activeSubject changes
   useEffect(() => {
-    if (!activeSubject || !userName) return;
+    // Guard: wait for userName to be loaded (non-empty from localStorage)
+    if (!activeSubject || !userNameRef.current) return;
     const savedMsgs = localStorage.getItem(`milo_chat_messages_${activeSubject}`);
     const savedHist = localStorage.getItem(`milo_chat_history_${activeSubject}`);
     
     if (savedMsgs && savedHist) {
-      setMessages(JSON.parse(savedMsgs));
-      setGeminiHistory(JSON.parse(savedHist));
-      greetedSubjectRef.current = activeSubject;
+      try {
+        setMessages(JSON.parse(savedMsgs));
+        setGeminiHistory(JSON.parse(savedHist));
+        greetedSubjectRef.current = activeSubject;
+      } catch {
+        setMessages([]);
+        setGeminiHistory([]);
+        greetedSubjectRef.current = activeSubject;
+        generateGreeting(false);
+      }
     } else {
       setMessages([]);
       setGeminiHistory([]);
@@ -847,14 +864,14 @@ export default function BuddyPage() {
       ]);
     } catch (err) {
       console.error("handleSend error:", err);
-      let friendlyError = `Milo Alert: My AI servers are currently experiencing high demand and taking a short breather.`;
+      let friendlyError = `My connection to the AI backend hit a snag. `;
       
       if (frictionType === "Easily Overwhelmed") {
-        friendlyError += ` Sawa! Don't let this technical glitch overwhelm you. Let's take a deep breath together 🧘. While we wait, review the active subjects on your Today dashboard or try logging a quick study session! Let's try again in a few seconds.`;
+        friendlyError += `Sawa — don't let this derail you. While we reconnect, glance over what we just covered. Try again in a moment.`;
       } else if (frictionType === "Easily Distracted") {
-        friendlyError += ` Sawa! But don't let this distraction break your momentum or lure you away to social media! Use this 30-second break to perform active self-quiz recall on what we just discussed. Sawa? Let's tap again in a moment!`;
+        friendlyError += `Quick: before you try again, recall one thing we just discussed. Keeps the momentum alive.`;
       } else {
-        friendlyError += ` No big deal — let's review our notes for 30 seconds and try again! Sawa?`;
+        friendlyError += `Review your notes for 30 seconds and try again.`;
       }
 
       setMessages((prev) => [
@@ -1055,9 +1072,8 @@ export default function BuddyPage() {
               </div>
             </div>
           ) : (
-            <div className="mt-2 text-[8px] text-zinc-400 font-semibold flex items-center gap-1">
-              <span>💡</span>
-              <span>Enable to instruct Milo Buddy to ignore everything else and drill you on one custom unit and topic.</span>
+            <div className="mt-2 text-[8px] text-zinc-400 dark:text-zinc-500 font-semibold">
+              Enable to lock Milo Buddy onto one specific unit and topic — all coaching, quizzes, and flashcards will target that concept exclusively.
             </div>
           )}
         </div>
@@ -1419,7 +1435,7 @@ export default function BuddyPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
             disabled={isLoading}
-            className="flex-1 bg-transparent border-none text-xs focus-visible:ring-0 focus-visible:ring-offset-0 px-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 h-9 font-semibold text-zinc-900 dark:text-zinc-150"
+            className="flex-1 bg-transparent border-none text-xs focus-visible:ring-0 focus-visible:ring-offset-0 px-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 h-9 font-semibold text-zinc-900 dark:text-white"
           />
           <button
             onClick={() => {

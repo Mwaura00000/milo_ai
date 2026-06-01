@@ -4,6 +4,7 @@ import "./globals.css";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -19,8 +20,18 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "Milo | Adaptive Study Coach",
-  description: "A mobile-first study planner and behavioral coach.",
+  description: "Your AI-powered cognitive study partner. Build smarter study habits with spaced repetition, active recall, and a personalized learning plan.",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Milo",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-touch-icon": "/milo_mascot.png",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -43,6 +54,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={`${nunito.variable} ${plusJakartaSans.variable} min-h-full flex flex-col bg-[#f8fafc] dark:bg-[#090d16] text-foreground font-sans antialiased`}>
+        <ServiceWorkerRegistrar />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -60,6 +72,7 @@ export default function RootLayout({
     </html>
   );
 }
+
 
 
 
